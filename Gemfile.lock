@@ -1,11 +1,13 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    json (2.10.2)
 
 PLATFORMS
   arm64-darwin-24
 
 DEPENDENCIES
+  json
 
 BUNDLED WITH
    2.4.10
