@@ -31,7 +31,7 @@ export APP_NAME=<your-heroku-app-name>
 heroku create $APP_NAME
 
 heroku buildpacks:add heroku/python -a $APP_NAME
-heroku buildpacks:add heroku/ruby -a $APP_NAME
+heroku buildpacks:add https://github.com/heroku/heroku-buildpack-apt
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
 heroku config:set API_KEY=$(openssl rand -hex 32) -a $APP_NAME
@@ -107,11 +107,11 @@ python example_clients/test_stdio.py mcp list_tools | jq
 
 Example tool call request:
 ```bash
-python example_clients/test_stdio.py mcp call_tool --args '{
+python example_clients/test_sse.py mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "import numpy as np; print(np.random.rand(50).tolist())",
-    "packages": ["numpy"]
+    "code": "puts rand(1..100)",
+    "packages": []
   }
 }' | jq
 ```
@@ -126,9 +126,9 @@ Content-Length: 148
 Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 205
+Content-Length: 136
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts rand(1..100)","packages":[]}}}
 EOF
 ```
 *(Note that the server expects the client to send a shutdown request, so you can stop the connection with CTRL-C)*

@@ -4,10 +4,10 @@ import shutil
 import tempfile
 from typing import Optional, Dict, Any, List
 
-def run_command(cmd: List[str]) -> Dict[str, Any]:
+def run_command(cmd: List[str], env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Executes a command using subprocess and returns output and errors."""
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, env=env)
         return {
             "returncode": result.returncode,
             "stdout": result.stdout.strip(),
@@ -19,6 +19,7 @@ def run_command(cmd: List[str]) -> Dict[str, Any]:
             "stdout": "",
             "stderr": "Error: Execution timed out"
         }
+
 
 def install_dependencies(packages: Optional[List[str]], install_cmd_path: str = "gem") -> Dict[str, Any]:
     """
@@ -34,12 +35,13 @@ def install_dependencies(packages: Optional[List[str]], install_cmd_path: str = 
     if not packages:
         return {"returncode": 0, "stdout": "", "stderr": ""}  # No installation needed
 
-    cmd = [install_cmd_path, "install"] + packages
+    cmd = [install_cmd_path, "install", "--user-install"] + packages
     return run_command(cmd)
 
 def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
     """
     Runs Ruby code in a temporary directory after installing optional gems.
+    Note ruby gems are not installed in an isolated fashion.
 
     Note that this does NOT mean the code is fully isolated or secure - it just means the gem installations
     are isolated.
@@ -65,7 +67,10 @@ def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
         with open(temp_path, "w") as f:
             f.write(code)
 
-        return run_command(["ruby", temp_path])
+        env = os.environ.copy()
+        env["GEM_HOME"] = os.path.expanduser("~/.gem")
+
+        return run_command(["ruby", temp_path], env=env)
 
     finally:
         shutil.rmtree(temp_dir)
@@ -98,4 +103,7 @@ def code_exec_ruby(code: str, packages: Optional[List[str]] = None, isolated_ven
             "stderr": f"Dependency install failed:\n{install_result['stderr']}"
         }
 
-    return run_command(["ruby", "-e", code])
+    env = os.environ.copy()
+    env["GEM_HOME"] = os.path.expanduser("~/.gem")
+
+    return run_command(["ruby", "-e", code], env=env)
