@@ -31,6 +31,7 @@ export APP_NAME=<your-heroku-app-name>
 heroku create $APP_NAME
 
 heroku buildpacks:add heroku/python -a $APP_NAME
+# TODO: change this to the ruby buildpack and make empt required files?
 heroku buildpacks:add https://github.com/heroku/heroku-buildpack-apt
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
@@ -152,15 +153,15 @@ heroku run --app $APP_NAME -- bash -c 'python -m example_clients.test_stdio mcp 
 ```
 or:
 ```bash
-heroku run --app $APP_NAME -- bash -c '
-python -m example_clients.test_stdio mcp call_tool --args '\''{
+heroku run --app "$APP_NAME" -- bash <<'EOF'
+python -m example_clients.test_stdio mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "import numpy as np; print(np.random.rand(50).tolist())",
-    "packages": ["numpy"]
+    "code": "$stdout.sync = true; $VERBOSE = nil; puts rand(1..100)",
+    "packages": []
   }
-}'\'' | jq
-'
+}' | jq
+EOF
 ```
 
 #### 2. Remote STDIO - Direct Calls to One-Off Dyno
@@ -174,9 +175,9 @@ Content-Length: 148
 Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 205
+Content-Length: 136
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts rand(1..100)","packages":[]}}}
 EOF
 ```
 
