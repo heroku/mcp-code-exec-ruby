@@ -30,9 +30,8 @@ Instead of manually setting each variable, use the Heroku CLI to pull the correc
 export APP_NAME=<your-heroku-app-name>
 heroku create $APP_NAME
 
-heroku buildpacks:add heroku/python -a $APP_NAME
-# TODO: change this to the ruby buildpack and make empt required files?
-heroku buildpacks:add https://github.com/heroku/heroku-buildpack-apt
+heroku buildpacks:add --index 1 heroku/ruby
+heroku buildpacks:add --index 2 heroku/python
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
 heroku config:set API_KEY=$(openssl rand -hex 32) -a $APP_NAME
@@ -111,10 +110,11 @@ Example tool call request:
 python example_clients/test_sse.py mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "puts rand(1..100)",
+    "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
     "packages": []
   }
 }' | jq
+
 ```
 
 #### 2. Local STDIO - Direct Calls
@@ -127,9 +127,9 @@ Content-Length: 148
 Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 136
+Content-Length: 166
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts rand(1..100)","packages":[]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts Array.new(100) { rand(1..100) }.join(\", \")","packages":[]}}}
 EOF
 ```
 *(Note that the server expects the client to send a shutdown request, so you can stop the connection with CTRL-C)*
@@ -157,7 +157,7 @@ heroku run --app "$APP_NAME" -- bash <<'EOF'
 python -m example_clients.test_stdio mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "$stdout.sync = true; $VERBOSE = nil; puts rand(1..100)",
+    "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
     "packages": []
   }
 }' | jq
@@ -175,9 +175,9 @@ Content-Length: 148
 Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 136
+Content-Length: 166
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts rand(1..100)","packages":[]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts Array.new(100) { rand(1..100) }.join(\", \")","packages":[]}}}
 EOF
 ```
 
