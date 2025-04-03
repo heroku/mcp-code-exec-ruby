@@ -1,7 +1,7 @@
 
-# Heroku MCP Code Execution - Python
+# Heroku MCP Code Execution - Ruby
 
-- [Heroku MCP Code Execution - Python](#heroku-mcp-code-execution---python)
+- [Heroku MCP Code Execution - Ruby](#heroku-mcp-code-execution---ruby)
   - [Automatic Deployment](#automatic-deployment)
   - [Manual Deployment](#manual-deployment)
     - [**Set Required Environment Variables from Heroku CLI**](#set-required-environment-variables-from-heroku-cli)
@@ -9,12 +9,12 @@
     - [Local SSE](#local-sse)
       - [Local SSE - Example Requests](#local-sse---example-requests)
     - [Local STDIO](#local-stdio)
-      - [1. Local STDIO - Example Python STDIO Client](#1-local-stdio---example-python-stdio-client)
+      - [1. Local STDIO - Example Ruby STDIO Client](#1-local-stdio---example-ruby-stdio-client)
       - [2. Local STDIO - Direct Calls](#2-local-stdio---direct-calls)
   - [Remote Testing](#remote-testing)
     - [Remote SSE](#remote-sse)
     - [Remote STDIO](#remote-stdio)
-      - [1. Remote STDIO - Example Python STDIO Client, Running On-Server](#1-remote-stdio---example-python-stdio-client-running-on-server)
+      - [1. Remote STDIO - Example Ruby STDIO Client, Running On-Server](#1-remote-stdio---example-ruby-stdio-client-running-on-server)
       - [2. Remote STDIO - Direct Calls to One-Off Dyno](#2-remote-stdio---direct-calls-to-one-off-dyno)
     - [3. Coming Soon - Heroku MCP Gateway!](#3-coming-soon---heroku-mcp-gateway)
 
@@ -30,7 +30,8 @@ Instead of manually setting each variable, use the Heroku CLI to pull the correc
 export APP_NAME=<your-heroku-app-name>
 heroku create $APP_NAME
 
-heroku buildpacks:set heroku/python -a $APP_NAME
+heroku buildpacks:add heroku/python -a $APP_NAME
+heroku buildpacks:add heroku/ruby -a $APP_NAME
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
 heroku config:set API_KEY=$(openssl rand -hex 32) -a $APP_NAME
@@ -87,7 +88,7 @@ Example tool call request:
 *NOTE: this will intentionally NOT work if you have set `STDIO_MODE_ONLY` to `true`.*
 ```bash
 python example_clients/test_sse.py mcp call_tool --args '{
-  "name": "code_exec_python",
+  "name": "code_exec_ruby",
   "arguments": {
     "code": "import numpy as np; print(np.random.rand(50).tolist())",
     "packages": ["numpy"]
@@ -98,7 +99,7 @@ python example_clients/test_sse.py mcp call_tool --args '{
 ### Local STDIO
 There are two ways to easily test out your MCP server in STDIO mode:
 
-#### 1. Local STDIO - Example Python STDIO Client
+#### 1. Local STDIO - Example Ruby STDIO Client
 List tools:
 ```
 python example_clients/test_stdio.py mcp list_tools | jq
@@ -107,7 +108,7 @@ python example_clients/test_stdio.py mcp list_tools | jq
 Example tool call request:
 ```bash
 python example_clients/test_stdio.py mcp call_tool --args '{
-  "name": "code_exec_python",
+  "name": "code_exec_ruby",
   "arguments": {
     "code": "import numpy as np; print(np.random.rand(50).tolist())",
     "packages": ["numpy"]
@@ -127,7 +128,7 @@ Content-Length: 66
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
 Content-Length: 205
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_python","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
 EOF
 ```
 *(Note that the server expects the client to send a shutdown request, so you can stop the connection with CTRL-C)*
@@ -144,7 +145,7 @@ You can run the same queries as shown in the [Local SSE - Example Requests](#loc
 ### Remote STDIO
 There are two ways to test out your remote MCP server in STDIO mode:
 
-#### 1. Remote STDIO - Example Python STDIO Client, Running On-Server
+#### 1. Remote STDIO - Example Ruby STDIO Client, Running On-Server
 To run against your deployed code, you can run the example client code on your deployed server inside a one-off dyno:
 ```bash
 heroku run --app $APP_NAME -- bash -c 'python -m example_clients.test_stdio mcp list_tools | jq'
@@ -153,7 +154,7 @@ or:
 ```bash
 heroku run --app $APP_NAME -- bash -c '
 python -m example_clients.test_stdio mcp call_tool --args '\''{
-  "name": "code_exec_python",
+  "name": "code_exec_ruby",
   "arguments": {
     "code": "import numpy as np; print(np.random.rand(50).tolist())",
     "packages": ["numpy"]
@@ -175,7 +176,7 @@ Content-Length: 66
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
 Content-Length: 205
 
-{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_python","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"import numpy as np; print(np.random.rand(50).tolist())","packages":["numpy"]}}}
 EOF
 ```
 
