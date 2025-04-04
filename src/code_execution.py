@@ -46,6 +46,9 @@ def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
     Note that this does NOT mean the code is fully isolated or secure - it just means the gem installations
     are isolated.
 
+    Note that this does NOT mean the code is fully isolated or secure - it just means the package installations
+    are isolated.
+
     Args:
         code: The code to run.
         packages: Optional gem packages to install before execution.

@@ -35,7 +35,7 @@ heroku buildpacks:add --index 2 heroku/python
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
 heroku config:set API_KEY=$(openssl rand -hex 32) -a $APP_NAME
-heroku config:set STDIO_MODE_ONLY=<true/false>
+heroku config:set STDIO_MODE_ONLY=<true/false> -a $APP_NAME
 ```
 
 *Note: we recommend setting `STDIO_MODE_ONLY` to `true` for security and code execution isolation security.*
@@ -79,6 +79,11 @@ uvicorn src.sse_server:app --reload
 
 Next, in a new pane, you can try running some queries against your server:
 #### Local SSE - Example Requests
+First run:
+```
+export API_KEY=$(heroku config:get API_KEY -a $APP_NAME)
+```
+
 List tools:
 ```bash
 python example_clients/test_sse.py mcp list_tools | jq
