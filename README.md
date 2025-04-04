@@ -90,8 +90,8 @@ Example tool call request:
 python example_clients/test_sse.py mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "import numpy as np; print(np.random.rand(50).tolist())",
-    "packages": ["numpy"]
+    "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
+    "packages": [""]
   }
 }' | jq
 ```
