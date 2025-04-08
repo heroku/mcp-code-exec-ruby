@@ -12,6 +12,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from src.set_up_tools import set_up_tools_server
 from src import config
 
+API_KEY = config.get_env_variable("API_KEY")
+
 # MCP is still working on ironing out SSE authentication protocols, so for now we'll build our own middleware layer:
 class APIKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -24,7 +26,7 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
         elif api_key_header:
             token = api_key_header
 
-        if token != config.API_KEY:
+        if token != API_KEY:
             return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
         return await call_next(request)

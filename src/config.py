@@ -13,8 +13,6 @@ def get_env_variable(var_name, required=True):
         raise EnvironmentError(f"{var_name} environment variable is not set or empty.")
     return value
 
-# Server:
-API_KEY = get_env_variable("API_KEY")
 # ENV variables with defauls:
 PORT = int(os.environ.get('PORT', 8000))
 WEB_CONCURRENCY = int(os.environ.get('WEB_CONCURRENCY', 1))
