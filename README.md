@@ -126,13 +126,9 @@ python example_clients/test_sse.py mcp call_tool --args '{
 Example tool call request:
 ```bash
 cat <<EOF | python -m src.stdio_server
-Content-Length: 148
-
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}
-Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 166
 
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts Array.new(100) { rand(1..100) }.join(\", \")","packages":[]}}}
 EOF
@@ -174,13 +170,9 @@ Or, you can also run or simulate a client locally that sends your client-side re
 
 ```bash
 heroku run --app "$APP_NAME" -- bash -c "python -m src.stdio_server 2> logs.txt" <<EOF
-Content-Length: 148
-
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"0.1.0","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}
-Content-Length: 66
 
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-Content-Length: 166
 
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"code_exec_ruby","arguments":{"code":"puts Array.new(100) { rand(1..100) }.join(\", \")","packages":[]}}}
 EOF
