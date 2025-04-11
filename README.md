@@ -112,14 +112,13 @@ python example_clients/test_stdio.py mcp list_tools | jq
 
 Example tool call request:
 ```bash
-python example_clients/test_sse.py mcp call_tool --args '{
+python example_clients/test_stdio.py mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
     "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
     "packages": []
   }
 }' | jq
-
 ```
 
 #### 2. Local STDIO - Direct Calls
