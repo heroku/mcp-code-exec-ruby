@@ -5,7 +5,8 @@
     "env": {
         "API_KEY": {
             "description": "API key for authentication",
-            "required": true
+            "required": true,
+            "generator": "secret"
         }
     },
     "addons": [],
