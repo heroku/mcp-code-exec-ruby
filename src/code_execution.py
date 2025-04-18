@@ -124,6 +124,7 @@ def code_exec_ruby(
     and gems are isolated. When False, gems are installed to ~/.gem.
 
     The Ruby runtime has access to networking, the filesystem, and standard libraries.
+    A non-zero exit code is an error and should be fixed.
 
     Returns:
         JSON containing:
