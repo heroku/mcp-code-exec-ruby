@@ -2,7 +2,8 @@ import subprocess
 import os
 import shutil
 import tempfile
-from typing import Optional, Dict, Any, List
+from typing import Annotated, Optional, List, Dict, Any
+from pydantic import Field
 
 def run_command(cmd: List[str], env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Executes a command using subprocess and returns output and errors."""
@@ -71,31 +72,49 @@ def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
             f.write(code)
 
         env = os.environ.copy()
-        env["GEM_HOME"] = os.path.expanduser("~/.gem")
+        # ensure package installs are installed to the temporary directory for installation isolation:
+        env["GEM_HOME"] = os.path.join(temp_dir, ".gem")
+        env["PATH"] = f"{os.path.join(env['GEM_HOME'], 'bin')}:{env['PATH']}"
+        env["GEM_PATH"] = env["GEM_HOME"]
 
         return run_command(["ruby", temp_path], env=env)
 
     finally:
         shutil.rmtree(temp_dir)
 
-def code_exec_ruby(code: str, packages: Optional[List[str]] = None, isolated_venv: bool = False) -> Dict[str, Any]:
-    """
-    Executes a Ruby code snippet with optional gem dependencies.
 
-    Args:
-        code: The Ruby code to execute as a string.
-        packages: An optional list of gem names to install before execution.
-        isolated_venv: Whether to use a temporary directory for isolation.
-            Not needed for STDIO mode; recommended but not required for SSE mode,
-            to improve package isolation. Note that it will slow code execution down.
+def code_exec_ruby(
+    code: Annotated[
+        str,
+        Field(description="The Ruby code to execute as a string.")
+    ],
+    packages: Annotated[
+        Optional[List[str]],
+        Field(description="Optional list of gem names to install before execution.")
+    ] = None,
+    use_temp_dir: Annotated[
+        bool,
+        Field(description=(
+            "If True, code and dependencies are run in a temporary working directory. "
+            "Gems are installed in an isolated directory and will not affect or reuse the user's ~/.gem folder. "
+            "Not a secure sandbox."
+        ))
+    ] = False
+) -> Dict[str, Any]:
+    """Executes a Ruby code snippet with optional gem dependencies.
+
+    When `use_temp_dir` is True, the code and any installed gems are run in a throwaway temporary directory,
+    and gems are isolated. When False, gems are installed to ~/.gem.
+
+    The Ruby runtime has access to networking, the filesystem, and standard libraries.
 
     Returns:
-        A dictionary containing:
+        JSON containing:
             - 'returncode': Exit status of the execution.
             - 'stdout': Captured standard output.
             - 'stderr': Captured standard error or install failure messages.
     """
-    if isolated_venv:
+    if use_temp_dir:
         return run_in_tempdir(code, packages)
 
     install_result = install_dependencies(packages, install_cmd_path="gem")
