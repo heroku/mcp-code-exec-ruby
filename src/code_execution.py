@@ -2,7 +2,8 @@ import subprocess
 import os
 import shutil
 import tempfile
-from typing import Optional, Dict, Any, List
+from typing import Annotated, Optional, List, Dict, Any
+from pydantic import Field
 
 def run_command(cmd: List[str], env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Executes a command using subprocess and returns output and errors."""
@@ -20,14 +21,18 @@ def run_command(cmd: List[str], env: Optional[Dict[str, str]] = None) -> Dict[st
             "stderr": "Error: Execution timed out"
         }
 
-
-def install_dependencies(packages: Optional[List[str]], install_cmd_path: str = "gem") -> Dict[str, Any]:
+def install_dependencies(
+    packages: Optional[List[str]],
+    install_cmd_path: str = "gem",
+    env: Optional[Dict[str, str]] = None
+) -> Dict[str, Any]:
     """
     Installs Ruby gems using the specified gem executable.
 
     Args:
         packages: A list of gem names to install.
         install_cmd_path: Path to the gem executable to use.
+        env: Optional environment variables to pass to the subprocess.
 
     Returns:
         The result of the package installation command, or a no-op result if no install is needed.
@@ -35,30 +40,49 @@ def install_dependencies(packages: Optional[List[str]], install_cmd_path: str = 
     if not packages:
         return {"returncode": 0, "stdout": "", "stderr": ""}  # No installation needed
 
-    cmd = [install_cmd_path, "install", "--user-install"] + packages
-    return run_command(cmd)
+    if env is None:
+        commands = [install_cmd_path, "install", "--user-install"]
+    else:
+        commands = [install_cmd_path, "install"]
+
+    cmd = commands + packages
+    return run_command(cmd, env=env)
+
+def gem_already_installed(gem_name: str, env: Optional[Dict[str, str]] = None) -> bool:
+    result = subprocess.run(
+        ["gem", "list", "-i", gem_name],
+        capture_output=True,
+        text=True,
+        env=env
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
 
 def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
     """
-    Runs Ruby code in a temporary directory after installing optional gems.
-    Note ruby gems are not installed in an isolated fashion.
+    Runs Ruby code in a temporary directory with optional gem dependencies.
 
-    Note that this does NOT mean the code is fully isolated or secure - it just means the gem installations
-    are isolated.
+    Gems are installed into a temporary directory and isolated from the user's global gem environment
+    by setting GEM_HOME and GEM_PATH. This avoids polluting ~/.gem and prevents access to previously installed gems.
 
-    Note that this does NOT mean the code is fully isolated or secure - it just means the package installations
-    are isolated.
+    Note: This is not a secure sandbox. The code still has full access to the filesystem and network.
 
     Args:
-        code: The code to run.
-        packages: Optional gem packages to install before execution.
+        code: The Ruby code to run.
+        packages: Optional list of gem names to install before execution.
 
     Returns:
         Dictionary of returncode, stdout, and stderr.
     """
     temp_dir = tempfile.mkdtemp()
     try:
-        install_result = install_dependencies(packages, install_cmd_path="gem")
+        env = os.environ.copy()
+        gem_home = os.path.join(temp_dir, ".gem")
+        env["GEM_HOME"] = gem_home
+        env["GEM_PATH"] = gem_home
+        env["PATH"] = f"{os.path.join(gem_home, 'bin')}:{env['PATH']}"
+
+        # install gems using the temp GEM_HOME
+        install_result = install_dependencies(packages, install_cmd_path="gem", env=env)
         if install_result["returncode"] != 0:
             return {
                 "returncode": install_result["returncode"],
@@ -70,34 +94,49 @@ def run_in_tempdir(code: str, packages: Optional[List[str]]) -> Dict[str, Any]:
         with open(temp_path, "w") as f:
             f.write(code)
 
-        env = os.environ.copy()
-        env["GEM_HOME"] = os.path.expanduser("~/.gem")
-
         return run_command(["ruby", temp_path], env=env)
 
     finally:
         shutil.rmtree(temp_dir)
 
-def code_exec_ruby(code: str, packages: Optional[List[str]] = None, isolated_venv: bool = False) -> Dict[str, Any]:
-    """
-    Executes a Ruby code snippet with optional gem dependencies.
 
-    Args:
-        code: The Ruby code to execute as a string.
-        packages: An optional list of gem names to install before execution.
-        isolated_venv: Whether to use a temporary directory for isolation.
-            Not needed for STDIO mode; recommended but not required for SSE mode,
-            to improve package isolation. Note that it will slow code execution down.
+def code_exec_ruby(
+    code: Annotated[
+        str,
+        Field(description="The Ruby code to execute as a string.")
+    ],
+    packages: Annotated[
+        Optional[List[str]],
+        Field(description="Optional list of gem names to install before execution.")
+    ] = None,
+    use_temp_dir: Annotated[
+        bool,
+        Field(description=(
+            "If True, code and dependencies are run in a temporary working directory. "
+            "Gems are installed in an isolated directory and will not affect or reuse the user's ~/.gem folder. "
+            "Not a secure sandbox."
+        ))
+    ] = False
+) -> Dict[str, Any]:
+    """Executes a Ruby code snippet with optional gem dependencies.
+
+    When `use_temp_dir` is True, the code and any installed gems are run in a throwaway temporary directory,
+    and gems are isolated. When False, gems are installed to ~/.gem.
+
+    The Ruby runtime has access to networking, the filesystem, and standard libraries.
+    A non-zero exit code is an error and should be fixed.
 
     Returns:
-        A dictionary containing:
+        JSON containing:
             - 'returncode': Exit status of the execution.
             - 'stdout': Captured standard output.
             - 'stderr': Captured standard error or install failure messages.
     """
-    if isolated_venv:
+    if use_temp_dir:
         return run_in_tempdir(code, packages)
 
+    # Otherwise, you can rely on pre-installed shared packages:
+    packages = [pkg for pkg in packages if not gem_already_installed(pkg)]
     install_result = install_dependencies(packages, install_cmd_path="gem")
     if install_result["returncode"] != 0:
         return {

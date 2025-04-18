@@ -115,10 +115,11 @@ Example tool call request:
 python example_clients/test_stdio.py mcp call_tool --args '{
   "name": "code_exec_ruby",
   "arguments": {
-    "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
-    "packages": []
+    "code": "require \"colorize\"; puts \"Success!\".colorize(:green)",
+    "packages": ["colorize"],
+    "use_temp_dir": false
   }
-}' | jq
+}' | jq -r '.content[0].text' | jq -r .stdout
 ```
 
 #### 2. Local STDIO - Direct Calls
