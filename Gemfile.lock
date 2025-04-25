@@ -1,7 +1,6 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    json (2.10.2)
 
 PLATFORMS
   arm64-darwin-24
