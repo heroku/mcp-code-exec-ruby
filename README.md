@@ -179,6 +179,6 @@ EOF
 Again, note that since we're running our request through a single command, we're unable to simulate a client's shutdown request.
 
 ### 3. Coming Soon - Heroku MCP Gateway!
-Soon, you'll also be able to connect up your MPC repo to Heroku's MCP Gateway, which will make streaming requests and responses from one-off MCP dynos simple!
+Soon, you'll also be able to connect up your MCP repo to Heroku's MCP Gateway, which will make streaming requests and responses from one-off MCP dynos simple!
 
 The Heroku MCP Gateway will implement a rendezvous protocol so that you can easily talk to your MCP server one-off dynos (code execution isolation!) with seamless back-and-forth communication.
