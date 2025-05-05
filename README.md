@@ -67,12 +67,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If you're testing SSE, in one terminal pane you'll need to run:
+If you're testing SSE, in one terminal pane you'll need to start the server:
 ```
 source venv/bin/activate
-```
-And then to run the SSE server:
-```
+export API_KEY=$(heroku config:get API_KEY -a $APP_NAME)
 uvicorn src.sse_server:app --reload
 ```
 *Running with --reload is optional, but great for local development*
