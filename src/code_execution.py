@@ -135,8 +135,10 @@ def code_exec_ruby(
     if use_temp_dir:
         return run_in_tempdir(code, packages)
 
-    # Otherwise, you can rely on pre-installed shared packages:
-    packages = [pkg for pkg in packages if not gem_already_installed(pkg)]
+    # Otherwise, you can rely on pre-installed shared packages, if they exist:
+    if packages:
+        packages = [pkg for pkg in packages if not gem_already_installed(pkg)]
+
     install_result = install_dependencies(packages, install_cmd_path="gem")
     if install_result["returncode"] != 0:
         return {
