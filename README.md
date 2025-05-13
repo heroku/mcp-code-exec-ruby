@@ -32,15 +32,24 @@ heroku create $APP_NAME
 
 heroku buildpacks:add --index 1 heroku/ruby
 heroku buildpacks:add --index 2 heroku/python
-heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 # set a private API key that you create, for example:
 heroku config:set API_KEY=$(openssl rand -hex 32) -a $APP_NAME
 heroku config:set STDIO_MODE_ONLY=<true/false> -a $APP_NAME
 ```
 
-*Note: we recommend setting `STDIO_MODE_ONLY` to `true` for security and code execution isolation security.*
+*Note: we recommend setting `STDIO_MODE_ONLY` to `true` for security and code execution isolation security in non-dev environments.*
 
-Also put these config variables into a local .env file for local development:
+If you *only* want local & deployed `STDIO` capabilities (no `SSE server`), run:
+```
+heroku ps:scale web=0 -a $APP_NAME
+```
+If you do want a deployed `SSE` server, run:
+```
+heroku ps:scale web=1 -a $APP_NAME
+heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
+```
+
+Optionally, put these config variables into a local .env file for local development:
 ```
 heroku config -a $APP_NAME --shell | tee .env > /dev/null
 ```
@@ -140,7 +149,13 @@ export MCP_SERVER_URL=$(heroku info -s -a $APP_NAME | grep web_url | cut -d= -f2
 ```
 
 ### Remote SSE
-You can run the same queries as shown in the [Local SSE - Example Requests](#local-sse-example-requests) testing section - because you've set `MCP_SERVER_URL`, the client will call out to your deployed server.
+To test your remote `SSE` server, you'll need to make sure a web process is actually spun up. To save on costs, by default this repository doesn't spin up web dynos on creation, as many folks only want to use `STDIO` mode (local and one-off dyno) requests:
+```
+heroku ps:scale web=1 -a $APP_NAME
+```
+You only need to do this once, unless you spin back down to 0 web dynos to save on costs (`heroku ps:scale web=0 -a $APP_NAME`). To confirm currently running dynos, use `heroku ps -a $APP_NAME`.
+
+Next, you can run the same queries as shown in the [Local SSE - Example Requests](#local-sse---example-requests) testing section - because you've set `MCP_SERVER_URL`, the client will call out to your deployed server.
 
 ### Remote STDIO
 There are two ways to test out your remote MCP server in STDIO mode:
@@ -181,4 +196,6 @@ Again, note that since we're running our request through a single command, we're
 ### 3. Coming Soon - Heroku MCP Gateway!
 Soon, you'll also be able to connect up your MCP repo to Heroku's MCP Gateway, which will make streaming requests and responses from one-off MCP dynos simple!
 
-The Heroku MCP Gateway will implement a rendezvous protocol so that you can easily talk to your MCP server one-off dynos (code execution isolation!) with seamless back-and-forth communication.
+The Heroku MCP Gateway implements a rendezvous protocol so that you can easily talk to your MCP server one-off dynos (code execution isolation!) with seamless back-and-forth communication.
+
+After [deploying and registering](https://devcenter.heroku.com/articles/heroku-inference-working-with-mcp) your MCP app on heroku, requests made to Heroku's [`v1/mcp/servers`](https://devcenter.heroku.com/articles/heroku-inference-api-v1-mcp-servers) will show you your registered MCP tools, and requests made to [`v1/agents/heroku`](https://devcenter.heroku.com/articles/heroku-inference-api-v1-agents-heroku) will be able to execute your MCP tools automatically via one-off dynos.
