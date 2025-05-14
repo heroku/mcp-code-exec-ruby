@@ -1,12 +1,16 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    base64 (0.2.0)
+    bigdecimal (3.1.9)
 
 PLATFORMS
   arm64-darwin-24
   x86_64-linux
 
 DEPENDENCIES
+  base64
+  bigdecimal
 
 BUNDLED WITH
    2.4.10
