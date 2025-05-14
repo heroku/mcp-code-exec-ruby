@@ -14,7 +14,7 @@
         },
         "STDIO_MODE_ONLY": {
             "description": "Only allow tool requests via STDIO mode?",
-            "value": false
+            "value": "false"
         }
     },
     "formation": [
@@ -26,7 +26,11 @@
     ],
     "addons": [],
     "buildpacks": [
-        { "url": "heroku/python" },
-        { "url": "heroku/ruby" }
+        {
+            "url": "heroku/python"
+        },
+        {
+            "url": "heroku/ruby"
+        }
     ]
 }
