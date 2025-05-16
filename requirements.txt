@@ -1,5 +1,5 @@
-mcp>=1.7.1
-fastapi
-uvicorn
-python-dotenv
-mando
+mcp==1.7.1
+fastapi==0.115.12
+uvicorn==0.34.0
+python-dotenv==1.1.0
+mando==0.8.2

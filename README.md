@@ -26,7 +26,7 @@
 ### **Set Required Environment Variables from Heroku CLI**
 Instead of manually setting each variable, use the Heroku CLI to pull the correct values.
 
-```sh
+```bash
 export APP_NAME=<your-heroku-app-name>
 heroku create $APP_NAME
 
@@ -40,44 +40,45 @@ heroku config:set STDIO_MODE_ONLY=<true/false> -a $APP_NAME
 *Note: we recommend setting `STDIO_MODE_ONLY` to `true` for security and code execution isolation security in non-dev environments.*
 
 If you *only* want local & deployed `STDIO` capabilities (no `SSE server`), run:
-```
+```bash
 heroku ps:scale web=0 -a $APP_NAME
 ```
+
 If you do want a deployed `SSE` server, run:
-```
+```bash
 heroku ps:scale web=1 -a $APP_NAME
 heroku config:set WEB_CONCURRENCY=1 -a $APP_NAME
 ```
 
 Optionally, put these config variables into a local .env file for local development:
-```
+```bash
 heroku config -a $APP_NAME --shell | tee .env > /dev/null
 ```
 
 Next, connect your app to your git repo:
-```
+```bash
 heroku git:remote -a $APP_NAME
 ```
 And deploy!
-```
+```bash
 git push heroku main
 ```
 View logs with:
-```
+```bash
 heroku logs --tail -a $APP_NAME
 ```
 
 ## Local Testing
 ### Local SSE
 One-time packages installation:
-```
+```bash
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 If you're testing SSE, in one terminal pane you'll need to start the server:
-```
+```bash
 source venv/bin/activate
 export API_KEY=$(heroku config:get API_KEY -a $APP_NAME)
 uvicorn src.sse_server:app --reload
@@ -87,7 +88,7 @@ uvicorn src.sse_server:app --reload
 Next, in a new pane, you can try running some queries against your server:
 #### Local SSE - Example Requests
 First run:
-```
+```bash
 export API_KEY=$(heroku config:get API_KEY -a $APP_NAME)
 ```
 
@@ -113,7 +114,7 @@ There are two ways to easily test out your MCP server in STDIO mode:
 
 #### 1. Local STDIO - Example Ruby STDIO Client
 List tools:
-```
+```bash
 python example_clients/test_stdio.py mcp list_tools | jq
 ```
 
@@ -150,7 +151,7 @@ export MCP_SERVER_URL=$(heroku info -s -a $APP_NAME | grep web_url | cut -d= -f2
 
 ### Remote SSE
 To test your remote `SSE` server, you'll need to make sure a web process is actually spun up. To save on costs, by default this repository doesn't spin up web dynos on creation, as many folks only want to use `STDIO` mode (local and one-off dyno) requests:
-```
+```bash
 heroku ps:scale web=1 -a $APP_NAME
 ```
 You only need to do this once, unless you spin back down to 0 web dynos to save on costs (`heroku ps:scale web=0 -a $APP_NAME`). To confirm currently running dynos, use `heroku ps -a $APP_NAME`.
