@@ -4,6 +4,8 @@ import shutil
 import tempfile
 from typing import Annotated, Optional, List, Dict, Any
 from pydantic import Field
+# local:
+from src import config
 
 def run_command(cmd: List[str], env: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Executes a command using subprocess and returns output and errors."""
@@ -108,15 +110,7 @@ def code_exec_ruby(
     packages: Annotated[
         Optional[List[str]],
         Field(description="Optional list of gem names to install before execution.")
-    ] = None,
-    use_temp_dir: Annotated[
-        bool,
-        Field(description=(
-            "If True, code and dependencies are run in a temporary working directory. "
-            "Gems are installed in an isolated directory and will not affect or reuse the user's ~/.gem folder. "
-            "Not a secure sandbox."
-        ))
-    ] = False
+    ] = None
 ) -> Dict[str, Any]:
     """Executes a Ruby code snippet with optional gem dependencies.
 
@@ -132,7 +126,7 @@ def code_exec_ruby(
             - 'stdout': Captured standard output.
             - 'stderr': Captured standard error or install failure messages.
     """
-    if use_temp_dir:
+    if config.USE_TEMP_DIR:
         return run_in_tempdir(code, packages)
 
     # Otherwise, you can rely on pre-installed shared packages, if they exist:
