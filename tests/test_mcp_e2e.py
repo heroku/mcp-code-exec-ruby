@@ -50,10 +50,10 @@ async def _safe_call(ctx: dict, *cli_args) -> str:
 # ---------- actual tests ----------------------------------------------------
 async def test_list_tools(ctx):
     data = await _safe_call(ctx, "list_tools")
-    assert "code_exec_python" in data
+    assert "code_exec_ruby" in data
 
 
 async def test_code_exec(ctx):
-    payload = json.dumps({"name": "code_exec_python", "arguments": {"code": "print(2+2)"}})
+    payload = json.dumps({"name": "code_exec_ruby", "arguments": {"code": 'puts 2 + 2'}})
     data = await _safe_call(ctx, "call_tool", "--args", payload)
     assert _extract_stdout(data) == "4"
