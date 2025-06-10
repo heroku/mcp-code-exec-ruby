@@ -1,0 +1,107 @@
+name: MCP Tests
+
+on:
+  pull_request:
+jobs:
+  ###########################################################################
+  # 1 - Local integration tests (always run)
+  ###########################################################################
+  local:
+    runs-on: ubuntu-latest
+    # Dummy key lets the clients authenticate against the local servers.
+    env:
+      API_KEY: ci-test-key
+
+    steps:
+      # Optional: cache wheels to speed up numpy / scipy installs
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest (local transports)
+        run: pytest -q
+
+  ###########################################################################
+  # 2 - Deploy this PR to a temp Heroku app and run remote tests
+  ###########################################################################
+  remote:
+    runs-on: ubuntu-latest
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      # TODO: make this into a github secret, just in case
+      API_KEY: ci-test-key
+      APP_NAME: mcp-toolkit-pr-${{ github.event.number }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # <-- disables shallow clone, which heroku is upset by?
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Log in to Heroku
+        run: |
+          echo "$HEROKU_API_KEY" | heroku auth:token
+
+      - name: Create temp Heroku app for this PR
+        run: |
+          heroku create $APP_NAME
+          heroku config:set API_KEY=$API_KEY --app $APP_NAME
+
+      - name: Deploy this branch to Heroku
+        run: |
+          git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$APP_NAME.git HEAD:refs/heads/main --force
+
+      - uses: actions/setup-python@v5
+        with:
+          # should align with .python-version
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Get Heroku app URL
+        id: heroku_url
+        run: |
+          url=$(heroku info -s -a $APP_NAME | grep web_url | cut -d= -f2 | tr -d '\n')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Wait briefly for MCP server to fully boot
+        run: sleep 3
+
+      - name: Debug env
+        run: |
+            echo "API_KEY is ${API_KEY:+set}"  # won't print the key, just confirms it's non-empty
+            echo "MCP_SERVER_URL = $MCP_SERVER_URL"
+
+      - name: Run pytest against deployed app
+        env:
+          MCP_SERVER_URL: ${{ steps.heroku_url.outputs.url }}
+          API_KEY: ${{ env.API_KEY }}
+        run: pytest -q
+
+      - name: Destroy Heroku app after test
+        if: always()
+        run: |
+          heroku apps:destroy --app $APP_NAME --confirm $APP_NAME
