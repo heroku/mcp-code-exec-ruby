@@ -25,10 +25,10 @@ jobs:
         with:
           python-version: ${{ steps.python-version.outputs.version }}
 
-      - name: Read Ruby version from .ruby-version
+      - name: Read Ruby version from Gemfile
         id: ruby-version
         run: |
-          RUBY_VERSION=$(cat .ruby-version)
+          RUBY_VERSION=$(grep -oP '^ruby\s+"\K[0-9.]+' Gemfile)
           echo "version=$RUBY_VERSION" >> $GITHUB_OUTPUT
 
       - uses: ruby/setup-ruby@v1
@@ -90,10 +90,10 @@ jobs:
         with:
           python-version: ${{ steps.python-version.outputs.version }}
 
-      - name: Read Ruby version from .ruby-version
+      - name: Read Ruby version from Gemfile
         id: ruby-version
         run: |
-          RUBY_VERSION=$(cat .ruby-version)
+          RUBY_VERSION=$(grep -oP '^ruby\s+"\K[0-9.]+' Gemfile)
           echo "version=$RUBY_VERSION" >> $GITHUB_OUTPUT
 
       - uses: ruby/setup-ruby@v1
