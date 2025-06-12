@@ -16,6 +16,10 @@
             "description": "Only allow tool requests via STDIO mode?",
             "value": "false"
         },
+        "REMOTE_SERVER_TRANSPORT_MODULE": {
+            "description": "Tranport module name used for deployed web app (applicable when web formation size is >0). `streamable_http_server` or `sse_server`.",
+            "value": "streamable_http_server"
+        },
         "USE_TEMP_DIR": {
            "description": "If True, gems are installed in an isolated temporary directory and will not affect or reuse the user's ~/.gem folder. Not a secure sandbox.",
             "value": "false"
