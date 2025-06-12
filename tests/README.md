@@ -21,6 +21,8 @@ heroku ps:scale web=1 -a "$APP_NAME"
 ```
 
 ---
+All of these tests will run automatically via github CI when you push up a pull request.
+However, if you wish to run these end to end integration tests locally, you can do that too.
 
 ## 1 · Install dependencies
 
@@ -30,6 +32,7 @@ pip install -r requirements.txt
 ```
 
 ## 2 · Run local transports only
+Next, deploy your app. This is required for all E2E tests to run (some tests will be skipped if an app is not deployed & `MCP_SERVER_URL` is not set).
 ```bash
 git push heroku <your-branch>:main
 ```
@@ -41,7 +44,10 @@ pytest tests -q
 
 ## 3 - Run local & all deployed transports
 ```bash
+REMOTE_SERVER_TYPE=$(heroku config:get REMOTE_SERVER_TYPE) \
 MCP_SERVER_URL=$(heroku info -s -a "$APP_NAME" | grep web_url | cut -d= -f2 | tr -d '\n') \
 API_KEY=$(heroku config:get API_KEY -a "$APP_NAME") \
 pytest tests -q
 ```
+
+*NOTE: if your `REMOTE_SERVER_TYPE` is set to `sse_server` and not the default `streamable_http_server`, you'll need to change the `REMOTE_SERVER_TRANSPORT_MODULE` declaration line in `.github/workflows/test.yml` to make sure that the end to end integration tests against the temporary deployed remote server are using the appropriate client code.*
