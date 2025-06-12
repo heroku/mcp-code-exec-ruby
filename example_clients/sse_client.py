@@ -32,8 +32,14 @@ def mcp(method_name, args=None):
 
     Examples:
         python example_clients/test_sse.py mcp list_tools
-        python example_clients/test_sse.py mcp call_tool --args '{"name": "fetch_webpage_and_markdownify", "arguments": {"url": "https://example.com"}}'
-    """
+
+        python example_clients/test_sse.py mcp call_tool --args '{
+            "name": "code_exec_ruby",
+            "arguments": {
+                "code": "puts Array.new(100) { rand(1..100) }.join(\", \")",
+                "packages": [""]
+            }
+        }' | jq    """
     result = asyncio.run(run(method_name, args))
     print(json.dumps(result.model_dump(), indent=2))
 
