@@ -53,6 +53,7 @@ jobs:
   # 2 - Deploy this PR to a temp Heroku app and run tests against deployed app (in addition to 'local')
   ###########################################################################
   remote:
+    if: false  # These e2d depployment tests are super useful, but require you to add a HEROKU_API_KEY to your repo's actions secrets.
     runs-on: ubuntu-latest
     env:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
