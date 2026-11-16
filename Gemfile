@@ -1,7 +1,7 @@
 # Gemfile
 source "https://rubygems.org"
 
-ruby "3.4.4"
+ruby "3.4.12"
 
 gem "base64"
 gem "bigdecimal"
