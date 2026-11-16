@@ -13,7 +13,7 @@ DEPENDENCIES
   bigdecimal
 
 RUBY VERSION
-   ruby 3.4.4p34
+   ruby 3.4.12p148
 
 BUNDLED WITH
    2.4.10
